@@ -1,0 +1,226 @@
+.contact-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+  }
+  
+  .contact-hero {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: white;
+    text-align: center;
+    padding: 80px 20px;
+  }
+  
+  .contact-hero h1 {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+  
+  .contact-hero p {
+    font-size: 20px;
+    opacity: 0.9;
+  }
+  
+  .contact-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px;
+  }
+  
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+  
+  /* Contact Info Section */
+  .contact-info {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .contact-info h2 {
+    font-size: 28px;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+  
+  .info-items {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    transition: all 0.3s;
+  }
+  
+  .info-item:hover {
+    transform: translateX(5px);
+    background: rgba(124,255,73,0.08);
+  }
+  
+  .info-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+  }
+  
+  .info-details h4 {
+    margin: 0 0 5px;
+    color: #fff;
+    font-size: 18px;
+  }
+  
+  .info-details p {
+    margin: 0;
+    color: #aaa;
+    line-height: 1.4;
+  }
+  
+  /* Contact Form Section */
+  .contact-form {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .contact-form h2 {
+    font-size: 28px;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #ccc;
+  }
+  
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    font-size: 14px;
+    color: #fff;
+    transition: all 0.3s;
+    box-sizing: border-box;
+  }
+  
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: rgba(124,255,73,0.04);
+  }
+  
+  .form-group input::placeholder,
+  .form-group textarea::placeholder {
+    color: #555;
+  }
+  
+  .error {
+    color: var(--accent);
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+  }
+  
+  .success-message {
+    background: rgba(0, 200, 83, 0.2);
+    border: 1px solid #00c853;
+    color: #69f0ae;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(124,255,73,0.28);
+  }
+  
+  /* Map Container */
+  .map-container {
+    margin-top: 40px;
+  }
+  
+  .map-placeholder {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 60px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #aaa;
+  }
+  
+  .map-note {
+    font-size: 12px;
+    margin-top: 10px;
+    opacity: 0.7;
+  }
+  
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .contact-hero h1 {
+      font-size: 32px;
+    }
+    
+    .contact-hero p {
+      font-size: 16px;
+    }
+    
+    .contact-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .contact-info h2,
+    .contact-form h2 {
+      font-size: 24px;
+    }
+    
+    .map-placeholder {
+      padding: 40px 20px;
+    }
+    
+    .info-item {
+      padding: 10px;
+    }
+    
+    .info-icon {
+      font-size: 24px;
+    }
+  }

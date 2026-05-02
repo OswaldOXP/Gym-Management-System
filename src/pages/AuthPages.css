@@ -1,0 +1,69 @@
+.auth-page {
+  display: flex; min-height: 100vh;
+}
+
+.auth-left {
+  flex: 1;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  padding: 60px 40px;
+  position: relative; overflow: hidden;
+}
+.auth-left::before {
+  content: '';
+  position: absolute; top: -100px; right: -100px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(124,255,73,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.auth-left-content { max-width: 360px; position: relative; }
+.auth-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-size: 1.1rem; font-weight: 800;
+  letter-spacing: 0.1em; color: var(--accent); margin-bottom: 40px;
+}
+.auth-left h1 { font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 16px; }
+.auth-left p { color: var(--text-muted); line-height: 1.7; margin-bottom: 40px; }
+.auth-left-stats {
+  display: flex; gap: 32px;
+}
+.auth-left-stats div { display: flex; flex-direction: column; }
+.auth-left-stats strong {
+  font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--accent);
+}
+.auth-left-stats span { font-size: 0.78rem; color: var(--text-muted); }
+.auth-perks {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.auth-perks li { font-size: 0.88rem; color: var(--text-muted); }
+.auth-perks li::before { color: var(--success); }
+
+.auth-right {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 60px 40px;
+}
+.auth-form-wrap { width: 100%; max-width: 400px; }
+.auth-form-wrap h2 { margin-bottom: 6px; font-size: 1.8rem; }
+.auth-sub { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 28px; }
+
+.auth-form { display: flex; flex-direction: column; gap: 16px; }
+.auth-error {
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+  border-radius: var(--radius); padding: 10px 14px;
+  font-size: 0.85rem; color: var(--danger);
+}
+
+.auth-switch { margin-top: 20px; font-size: 0.88rem; color: var(--text-muted); text-align: center; }
+
+.demo-shortcuts {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px; margin-bottom: 20px;
+}
+.demo-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; }
+.demo-btns { display: flex; gap: 8px; }
+
+@media (max-width: 768px) {
+  .auth-left { display: none; }
+  .auth-right { padding: 40px 24px; }
+}

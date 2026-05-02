@@ -1,0 +1,181 @@
+.trainer-detail-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    padding: 8px 0;
+  }
+  
+  .back-btn:hover {
+    text-decoration: underline;
+  }
+  
+  .trainer-detail-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .trainer-header {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  
+  .trainer-avatar-large {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    font-weight: bold;
+    color: white;
+  }
+  
+  .trainer-header-info h1 {
+    font-size: 32px;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  
+  .trainer-specialty {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 12px;
+  }
+  
+  .trainer-stats {
+    display: flex;
+    gap: 20px;
+    color: #888;
+    font-size: 14px;
+  }
+  
+  .trainer-bio,
+  .trainer-specialties,
+  .trainer-certifications,
+  .trainer-time-slots {
+    margin-bottom: 32px;
+  }
+  
+  .trainer-bio h2,
+  .trainer-specialties h2,
+  .trainer-certifications h2,
+  .trainer-time-slots h2 {
+    font-size: 22px;
+    color: #333;
+    margin-bottom: 16px;
+  }
+  
+  .trainer-bio p {
+    line-height: 1.6;
+    color: #555;
+  }
+  
+  .specialties-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .specialty-tag {
+    padding: 6px 14px;
+    background: rgba(124,255,73,0.08);
+    color: var(--accent);
+    border-radius: 20px;
+    font-size: 14px;
+  }
+  
+  .trainer-certifications ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .trainer-certifications li {
+    padding: 8px 0;
+    color: #555;
+  }
+  
+  .time-slots-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .time-slot-btn {
+    padding: 10px 20px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .time-slot-btn:hover {
+    background: var(--accent);
+    color: white;
+  }
+  
+  .time-slot-btn.selected {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  
+  .book-session-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  
+  .book-session-btn:hover {
+    transform: translateY(-2px);
+  }
+  
+  .trainer-detail-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    font-size: 18px;
+    color: #666;
+  }
+  
+  @media (max-width: 768px) {
+    .trainer-detail-card {
+      padding: 20px;
+    }
+    
+    .trainer-header {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .trainer-header-info h1 {
+      font-size: 24px;
+    }
+    
+    .trainer-stats {
+      justify-content: center;
+    }
+  }

@@ -1,0 +1,144 @@
+.workout-detail-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    padding: 8px 0;
+  }
+  
+  .back-btn:hover {
+    text-decoration: underline;
+  }
+  
+  .workout-detail-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .workout-detail-card h1 {
+    font-size: 32px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .workout-meta {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+  
+  .meta-badge {
+    padding: 8px 16px;
+    background: #f0f0f0;
+    border-radius: 25px;
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .exercises-section h2,
+  .benefits-section h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .exercises-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+  
+  .exercise-item {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border-left: 4px solid var(--accent);
+  }
+  
+  .exercise-name {
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: #333;
+  }
+  
+  .exercise-details {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .benefits-section ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 30px;
+  }
+  
+  .benefits-section li {
+    padding: 10px 0;
+    padding-left: 24px;
+    position: relative;
+    color: #555;
+  }
+  
+  .benefits-section li:before {
+    content: "✓";
+    color: #28a745;
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+  }
+  
+  .book-workout-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  
+  .book-workout-btn:hover {
+    transform: translateY(-2px);
+  }
+  
+  .detail-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    font-size: 18px;
+    color: #666;
+  }
+  
+  @media (max-width: 768px) {
+    .workout-detail-card {
+      padding: 20px;
+    }
+    
+    .workout-detail-card h1 {
+      font-size: 24px;
+    }
+    
+    .exercise-details {
+      flex-direction: column;
+      gap: 5px;
+    }
+  }
