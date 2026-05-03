@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename)
 const projectRoot = path.resolve(__dirname, '..')
 const GRAPH_ROOTS = ['src', 'server']
 const GRAPH_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx'])
-!const sseClients = new Set()
+const sseClients = new Set()
 
 app.use(cors({
   origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN.split(',').map(origin => origin.trim()),
