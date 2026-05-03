@@ -2,6 +2,13 @@
 
 A full-stack gym management system with role-based access (Admin, Trainer, Member). Built with React, Node.js/Express, MongoDB, and JWT authentication.
 
+## 👥 Group Members
+
+| Student ID | Name | Role |
+|------------|------|------|
+| 20240005935 | Oswald Pereira | Frontend & Backend Dev|
+| 20220001382 | Abir Hossain | Frontend & Backend Dev|
+
 ## 🚀 Live Deployment
 
 | Service | URL |
