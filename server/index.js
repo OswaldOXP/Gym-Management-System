@@ -14,7 +14,7 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 4000
 const JWT_SECRET = process.env.JWT_SECRET || 'ironcore-demo-secret'
-const MONGODB_URI = process.env.MONGODB_URI || ''
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ironcore'
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -49,6 +49,51 @@ const memberSchema = new mongoose.Schema({
   status: String,
   joined: String,
   expiry: String,
+}, { timestamps: true })
+
+const trainerSchema = new mongoose.Schema({
+  userId: String,
+  name: { type: String, required: true },
+  specialty: { type: String, required: true },
+  bio: String,
+  rating: { type: Number, default: 5 },
+  sessions: { type: Number, default: 0 },
+  price: { type: Number, default: 0 },
+  availability: [String],
+  active: { type: Boolean, default: true },
+  avatar: String,
+}, { timestamps: true })
+
+const membershipPlanSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+  period: { type: String, enum: ['month', 'year'], default: 'month' },
+  features: [String],
+  members: { type: Number, default: 0 },
+  active: { type: Boolean, default: true },
+  popular: { type: Boolean, default: false },
+}, { timestamps: true })
+
+const categorySchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: String,
+  color: String,
+  active: { type: Boolean, default: true },
+}, { timestamps: true })
+
+const bookingSchema = new mongoose.Schema({
+  memberId: String,
+  trainerId: String,
+  member: { type: String, required: true },
+  trainer: { type: String, required: true },
+  date: { type: String, required: true },
+  time: { type: String, required: true },
+  duration: { type: Number, default: 45 },
+  type: { type: String, required: true },
+  status: { type: String, enum: ['pending', 'confirmed', 'completed', 'cancelled'], default: 'pending' },
+  invoice: String,
+  createdBy: String,
+  notes: String,
 }, { timestamps: true })
 
 const sessionSchema = new mongoose.Schema({
@@ -110,6 +155,10 @@ const messageSchema = new mongoose.Schema({
 const models = {
   User: mongoose.models.User || mongoose.model('User', userSchema),
   Member: mongoose.models.Member || mongoose.model('Member', memberSchema),
+  Trainer: mongoose.models.Trainer || mongoose.model('Trainer', trainerSchema),
+  MembershipPlan: mongoose.models.MembershipPlan || mongoose.model('MembershipPlan', membershipPlanSchema),
+  Category: mongoose.models.Category || mongoose.model('Category', categorySchema),
+  Booking: mongoose.models.Booking || mongoose.model('Booking', bookingSchema),
   Session: mongoose.models.Session || mongoose.model('Session', sessionSchema),
   Payment: mongoose.models.Payment || mongoose.model('Payment', paymentSchema),
   WorkoutPlan: mongoose.models.WorkoutPlan || mongoose.model('WorkoutPlan', workoutPlanSchema),
@@ -127,6 +176,27 @@ const memory = {
   members: [
     { id: 1, name: 'Sara Al Mansoori', email: 'sara@email.com', phone: '+971 50 111 2222', plan: 'Pro', status: 'active', joined: '2024-01-15', expiry: '2025-03-31' },
     { id: 2, name: 'Ahmed Khalil', email: 'ahmed@email.com', phone: '+971 55 333 4444', plan: 'Elite', status: 'active', joined: '2023-11-02', expiry: '2025-11-02' },
+  ],
+  trainers: [
+    { id: 1, userId: '2', name: 'James Okafor', specialty: 'Strength & Conditioning', bio: 'Focused on progressive overload and injury-aware coaching.', rating: 4.9, sessions: 142, price: 150, availability: ['Mon', 'Tue', 'Thu', 'Fri'], active: true, avatar: 'J' },
+    { id: 2, userId: '', name: 'Lisa Chen', specialty: 'Yoga & Pilates', bio: 'Mobility, posture, and recovery-driven sessions.', rating: 4.8, sessions: 118, price: 130, availability: ['Mon', 'Wed', 'Fri'], active: true, avatar: 'L' },
+    { id: 3, userId: '', name: 'Mark Torres', specialty: 'HIIT & Cardio', bio: 'Fast-paced conditioning and fat-loss programs.', rating: 4.7, sessions: 97, price: 160, availability: ['Tue', 'Thu', 'Sat'], active: false, avatar: 'M' },
+    { id: 4, userId: '', name: 'Aisha Al Zaabi', specialty: 'Nutrition & Wellness', bio: 'Lifestyle, nutrition, and sustainable habit coaching.', rating: 4.9, sessions: 85, price: 140, availability: ['Mon', 'Wed', 'Sat'], active: true, avatar: 'A' },
+  ],
+  membershipPlans: [
+    { id: 1, name: 'Basic', price: 149, period: 'month', features: ['Full gym access', 'Locker room', 'Basic equipment'], members: 420, active: true, popular: false },
+    { id: 2, name: 'Pro', price: 299, period: 'month', features: ['All Basic features', '2 trainer sessions/month', 'Nutrition guide'], members: 580, active: true, popular: true },
+    { id: 3, name: 'Elite', price: 499, period: 'month', features: ['All Pro features', 'Unlimited trainer sessions', 'Priority booking'], members: 200, active: true, popular: false },
+    { id: 4, name: 'Annual Basic', price: 1490, period: 'year', features: ['All Basic features', '2 months free', 'Annual health check'], members: 85, active: true, popular: false },
+  ],
+  categories: [
+    { id: 1, name: 'Strength', description: 'Compound lifting and power development', color: '#7CFF49', active: true },
+    { id: 2, name: 'Cardio', description: 'Endurance and conditioning classes', color: '#3b82f6', active: true },
+    { id: 3, name: 'Mobility', description: 'Flexibility and recovery sessions', color: '#a855f7', active: true },
+  ],
+  bookings: [
+    { id: 1, memberId: '3', trainerId: '1', member: 'Ahmed Khalil', trainer: 'James Okafor', date: '2025-03-27', time: '09:00', duration: 60, type: 'Strength', status: 'confirmed', invoice: 'INV-001', createdBy: '1', notes: '' },
+    { id: 2, memberId: '1', trainerId: '2', member: 'Sara Al Mansoori', trainer: 'Lisa Chen', date: '2025-03-27', time: '10:30', duration: 45, type: 'Yoga', status: 'confirmed', invoice: 'INV-002', createdBy: '2', notes: '' },
   ],
   sessions: [],
   payments: [],
@@ -166,6 +236,105 @@ function permit(...roles) {
 function sanitizeUser(user) {
   const { passwordHash, ...safe } = user.toObject ? user.toObject() : user
   return safe
+}
+
+function toPlain(document) {
+  if (!document) return document
+  if (Array.isArray(document)) return document.map(item => toPlain(item))
+  if (document.toObject) return document.toObject()
+  return { ...document }
+}
+
+function sendValidationError(res, message) {
+  return res.status(400).json({ error: message })
+}
+
+function requireFields(fields, payload) {
+  const missing = fields.filter(field => {
+    const value = payload?.[field]
+    return value === undefined || value === null || value === ''
+  })
+  return missing
+}
+
+function validateEmail(email) {
+  return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function validateBookingPayload(payload) {
+  const missing = requireFields(['member', 'trainer', 'date', 'time', 'type'], payload)
+  if (missing.length) return `Missing required fields: ${missing.join(', ')}`
+  return null
+}
+
+function validatePlanPayload(payload) {
+  const missing = requireFields(['name', 'price', 'period'], payload)
+  if (missing.length) return `Missing required fields: ${missing.join(', ')}`
+  if (!['month', 'year'].includes(payload.period)) return 'Period must be either month or year'
+  if (Number.isNaN(Number(payload.price))) return 'Price must be a number'
+  return null
+}
+
+function validateTrainerPayload(payload) {
+  const missing = requireFields(['name', 'specialty'], payload)
+  if (missing.length) return `Missing required fields: ${missing.join(', ')}`
+  if (payload.price !== undefined && Number.isNaN(Number(payload.price))) return 'Price must be a number'
+  return null
+}
+
+function validateCategoryPayload(payload) {
+  const missing = requireFields(['name'], payload)
+  if (missing.length) return `Missing required fields: ${missing.join(', ')}`
+  return null
+}
+
+function validateMemberPayload(payload) {
+  const missing = requireFields(['name', 'email'], payload)
+  if (missing.length) return `Missing required fields: ${missing.join(', ')}`
+  if (!validateEmail(payload.email)) return 'Email is invalid'
+  return null
+}
+
+function validatePaymentPayload(payload) {
+  const missing = requireFields(['member', 'plan', 'amount'], payload)
+  if (missing.length) return `Missing required fields: ${missing.join(', ')}`
+  if (Number.isNaN(Number(payload.amount))) return 'Amount must be a number'
+  return null
+}
+
+function validateWorkoutPayload(payload) {
+  const missing = requireFields(['name', 'trainer', 'goal', 'level'], payload)
+  if (missing.length) return `Missing required fields: ${missing.join(', ')}`
+  return null
+}
+
+function validateSubscriptionPayload(payload) {
+  const missing = requireFields(['member', 'plan', 'start', 'end'], payload)
+  if (missing.length) return `Missing required fields: ${missing.join(', ')}`
+  return null
+}
+
+function validateAttendancePayload(payload) {
+  const missing = requireFields(['member', 'date', 'checkIn'], payload)
+  if (missing.length) return `Missing required fields: ${missing.join(', ')}`
+  return null
+}
+
+function validateMessagePayload(payload) {
+  const missing = requireFields(['name', 'email', 'message'], payload)
+  if (missing.length) return `Missing required fields: ${missing.join(', ')}`
+  if (!validateEmail(payload.email)) return 'Email is invalid'
+  return null
+}
+
+function validateMaybe(res, validator, payload) {
+  if (!validator) return null
+  const message = validator(payload)
+  if (message) {
+    sendValidationError(res, message)
+    return message
+  }
+  return null
 }
 
 function normalizeProjectPath(filePath) {
@@ -393,16 +562,19 @@ function crudRoutes(basePath, modelName, memoryKey, options = {}) {
   const createRoles = options.createRoles || ['admin', 'trainer']
   const updateRoles = options.updateRoles || ['admin', 'trainer']
   const deleteRoles = options.deleteRoles || ['admin']
+  const validateCreate = options.validateCreate
+  const validateUpdate = options.validateUpdate || validateCreate
 
   app.get(basePath, authRequired, async (_req, res) => {
-    if (connectedToMongo) return res.json(await models[modelName].find().sort({ createdAt: -1 }))
-    return res.json(memory[memoryKey])
+    if (connectedToMongo) return res.json(toPlain(await models[modelName].find().sort({ createdAt: -1 })))
+    return res.json(toPlain(memory[memoryKey]))
   })
 
   app.post(basePath, authRequired, permit(...createRoles), async (req, res) => {
+    if (validateMaybe(res, validateCreate, req.body)) return
     if (connectedToMongo) {
       const created = await models[modelName].create(req.body)
-      return res.status(201).json(created)
+      return res.status(201).json(toPlain(created))
     }
     const created = { ...req.body, id: Date.now() }
     memory[memoryKey].unshift(created)
@@ -411,10 +583,11 @@ function crudRoutes(basePath, modelName, memoryKey, options = {}) {
 
   app.put(`${basePath}/:id`, authRequired, permit(...updateRoles), async (req, res) => {
     const { id } = req.params
+    if (validateMaybe(res, validateUpdate, req.body)) return
     if (connectedToMongo) {
       const updated = await models[modelName].findByIdAndUpdate(id, req.body, { new: true })
       if (!updated) return res.status(404).json({ error: 'Not found' })
-      return res.json(updated)
+      return res.json(toPlain(updated))
     }
     const index = memory[memoryKey].findIndex(item => String(item.id) === String(id))
     if (index < 0) return res.status(404).json({ error: 'Not found' })
@@ -436,13 +609,82 @@ function crudRoutes(basePath, modelName, memoryKey, options = {}) {
   })
 }
 
-crudRoutes('/api/members', 'Member', 'members', { createRoles: ['admin', 'trainer'], updateRoles: ['admin', 'trainer'], deleteRoles: ['admin'] })
-crudRoutes('/api/sessions', 'Session', 'sessions', { createRoles: ['admin', 'trainer', 'member'], updateRoles: ['admin', 'trainer'], deleteRoles: ['admin', 'trainer'] })
-crudRoutes('/api/payments', 'Payment', 'payments', { createRoles: ['admin', 'trainer', 'member'], updateRoles: ['admin', 'trainer'], deleteRoles: ['admin'] })
-crudRoutes('/api/workouts', 'WorkoutPlan', 'workoutPlans', { createRoles: ['admin', 'trainer'], updateRoles: ['admin', 'trainer'], deleteRoles: ['admin'] })
-crudRoutes('/api/subscriptions', 'Subscription', 'subscriptions', { createRoles: ['admin', 'member'], updateRoles: ['admin', 'member'], deleteRoles: ['admin'] })
-crudRoutes('/api/attendance', 'Attendance', 'attendance', { createRoles: ['admin', 'trainer', 'member'], updateRoles: ['admin', 'trainer', 'member'], deleteRoles: ['admin'] })
-crudRoutes('/api/messages', 'Message', 'messages', { createRoles: ['admin', 'trainer', 'member'], updateRoles: ['admin'], deleteRoles: ['admin'] })
+crudRoutes('/api/members', 'Member', 'members', { createRoles: ['admin', 'trainer'], updateRoles: ['admin', 'trainer'], deleteRoles: ['admin'], validateCreate: validateMemberPayload })
+crudRoutes('/api/trainers', 'Trainer', 'trainers', { createRoles: ['admin'], updateRoles: ['admin'], deleteRoles: ['admin'], validateCreate: validateTrainerPayload })
+crudRoutes('/api/plans', 'MembershipPlan', 'membershipPlans', { createRoles: ['admin'], updateRoles: ['admin'], deleteRoles: ['admin'], validateCreate: validatePlanPayload })
+crudRoutes('/api/categories', 'Category', 'categories', { createRoles: ['admin'], updateRoles: ['admin'], deleteRoles: ['admin'], validateCreate: validateCategoryPayload })
+crudRoutes('/api/bookings', 'Booking', 'bookings', { createRoles: ['admin', 'trainer', 'member'], updateRoles: ['admin', 'trainer'], deleteRoles: ['admin'], validateCreate: validateBookingPayload })
+crudRoutes('/api/sessions', 'Booking', 'bookings', { createRoles: ['admin', 'trainer', 'member'], updateRoles: ['admin', 'trainer'], deleteRoles: ['admin'], validateCreate: validateBookingPayload })
+crudRoutes('/api/payments', 'Payment', 'payments', { createRoles: ['admin', 'trainer', 'member'], updateRoles: ['admin', 'trainer'], deleteRoles: ['admin'], validateCreate: validatePaymentPayload })
+crudRoutes('/api/workouts', 'WorkoutPlan', 'workoutPlans', { createRoles: ['admin', 'trainer'], updateRoles: ['admin', 'trainer'], deleteRoles: ['admin'], validateCreate: validateWorkoutPayload })
+crudRoutes('/api/subscriptions', 'Subscription', 'subscriptions', { createRoles: ['admin', 'member'], updateRoles: ['admin', 'member'], deleteRoles: ['admin'], validateCreate: validateSubscriptionPayload })
+crudRoutes('/api/attendance', 'Attendance', 'attendance', { createRoles: ['admin', 'trainer', 'member'], updateRoles: ['admin', 'trainer', 'member'], deleteRoles: ['admin'], validateCreate: validateAttendancePayload })
+crudRoutes('/api/messages', 'Message', 'messages', { createRoles: ['admin', 'trainer', 'member'], updateRoles: ['admin'], deleteRoles: ['admin'], validateCreate: validateMessagePayload })
+
+app.get('/api/users', authRequired, permit('admin'), async (_req, res) => {
+  const users = connectedToMongo ? await models.User.find().sort({ createdAt: -1 }) : memory.users
+  res.json(toPlain(users).map(sanitizeUser))
+})
+
+app.post('/api/users', authRequired, permit('admin'), async (req, res) => {
+  const { name, email, password, role = 'member' } = req.body || {}
+  if (!name || !email || !password) return sendValidationError(res, 'Name, email, and password are required')
+  if (!validateEmail(email)) return sendValidationError(res, 'Email is invalid')
+  if (!['admin', 'trainer', 'member'].includes(role)) return sendValidationError(res, 'Invalid role')
+
+  const existing = await findUserByEmail(email)
+  if (existing) return res.status(409).json({ error: 'Email already registered' })
+
+  const passwordHash = await bcrypt.hash(password, 10)
+  let user
+  if (connectedToMongo) {
+    user = await models.User.create({ name, email, passwordHash, role })
+  } else {
+    user = { id: Date.now(), name, email, passwordHash, role }
+    memory.users.unshift(user)
+  }
+
+  res.status(201).json(sanitizeUser(user))
+})
+
+app.put('/api/users/:id', authRequired, permit('admin'), async (req, res) => {
+  const { id } = req.params
+  const { name, email, password, role } = req.body || {}
+  if (email && !validateEmail(email)) return sendValidationError(res, 'Email is invalid')
+  if (role && !['admin', 'trainer', 'member'].includes(role)) return sendValidationError(res, 'Invalid role')
+
+  if (connectedToMongo) {
+    const updates = { ...req.body }
+    if (password) {
+      updates.passwordHash = await bcrypt.hash(password, 10)
+      delete updates.password
+    }
+    const updated = await models.User.findByIdAndUpdate(id, updates, { new: true })
+    if (!updated) return res.status(404).json({ error: 'Not found' })
+    return res.json(sanitizeUser(updated))
+  }
+
+  const index = memory.users.findIndex(item => String(item.id) === String(id))
+  if (index < 0) return res.status(404).json({ error: 'Not found' })
+  const next = { ...memory.users[index], ...req.body }
+  if (password) next.passwordHash = bcrypt.hashSync(password, 10)
+  delete next.password
+  memory.users[index] = next
+  return res.json(sanitizeUser(next))
+})
+
+app.delete('/api/users/:id', authRequired, permit('admin'), async (req, res) => {
+  const { id } = req.params
+  if (connectedToMongo) {
+    const deleted = await models.User.findByIdAndDelete(id)
+    if (!deleted) return res.status(404).json({ error: 'Not found' })
+    return res.status(204).end()
+  }
+  const before = memory.users.length
+  memory.users = memory.users.filter(item => String(item.id) !== String(id))
+  if (memory.users.length === before) return res.status(404).json({ error: 'Not found' })
+  return res.status(204).end()
+})
 
 app.post('/api/public/messages', async (req, res) => {
   const payload = {
@@ -467,25 +709,118 @@ app.post('/api/public/messages', async (req, res) => {
   return res.status(201).json(created)
 })
 
-app.get('/api/reports/summary', authRequired, permit('admin'), async (_req, res) => {
-  const members = connectedToMongo ? await models.Member.countDocuments() : memory.members.length
-  const sessions = connectedToMongo ? await models.Session.countDocuments() : memory.sessions.length
-  const revenue = connectedToMongo
-    ? (await models.Payment.aggregate([{ $match: { status: 'paid' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]))[0]?.total || 0
-    : memory.payments.filter(payment => payment.status === 'paid').reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+function buildOverviewSummary(source = {}) {
+  const paidPayments = source.payments || []
+  const bookings = source.bookings || source.sessions || []
+  const members = source.members || []
+  const subscriptions = source.subscriptions || []
 
-  res.json({ members, sessions, revenue })
+  return {
+    members: members.length,
+    bookings: bookings.length,
+    revenue: paidPayments.filter(payment => payment.status === 'paid').reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
+    activeTrainers: (source.trainers || []).filter(trainer => trainer.active !== false).length,
+    expiringSubscriptions: subscriptions.filter(subscription => subscription.status === 'expiring').length,
+    plans: (source.membershipPlans || source.plans || []).length,
+  }
+}
+
+app.get('/api/reports/summary', authRequired, permit('admin'), async (_req, res) => {
+  const summary = connectedToMongo
+    ? buildOverviewSummary({
+      members: await models.Member.find(),
+      bookings: await models.Booking.find(),
+      payments: await models.Payment.find(),
+      trainers: await models.Trainer.find(),
+      subscriptions: await models.Subscription.find(),
+    })
+    : buildOverviewSummary(memory)
+
+  res.json(summary)
+})
+
+app.get('/api/reports/full', authRequired, permit('admin'), async (_req, res) => {
+  const source = connectedToMongo
+    ? {
+      users: await models.User.find(),
+      members: await models.Member.find(),
+      trainers: await models.Trainer.find(),
+      plans: await models.MembershipPlan.find(),
+      categories: await models.Category.find(),
+      bookings: await models.Booking.find(),
+      payments: await models.Payment.find(),
+      attendance: await models.Attendance.find(),
+      workouts: await models.WorkoutPlan.find(),
+      subscriptions: await models.Subscription.find(),
+      messages: await models.Message.find(),
+    }
+    : memory
+
+  const bookings = source.bookings || []
+  const payments = source.payments || []
+  const attendance = source.attendance || []
+  const subscriptions = source.subscriptions || []
+  const trainers = source.trainers || []
+  const members = source.members || []
+
+  const revenueByMonth = payments.reduce((acc, payment) => {
+    const month = String(payment.date || '').slice(0, 7)
+    if (!month) return acc
+    acc[month] = (acc[month] || 0) + Number(payment.amount || 0)
+    return acc
+  }, {})
+
+  const bookingByTrainer = bookings.reduce((acc, booking) => {
+    acc[booking.trainer] = (acc[booking.trainer] || 0) + 1
+    return acc
+  }, {})
+
+  res.json({
+    summary: buildOverviewSummary(source),
+    counts: {
+      users: (source.users || []).length,
+      members: members.length,
+      trainers: trainers.length,
+      plans: (source.membershipPlans || source.plans || []).length,
+      categories: (source.categories || []).length,
+      bookings: bookings.length,
+      payments: payments.length,
+      attendance: attendance.length,
+      workouts: (source.workouts || []).length,
+      subscriptions: subscriptions.length,
+      messages: (source.messages || []).length,
+    },
+    revenueByMonth: Object.entries(revenueByMonth).map(([month, revenue]) => ({ month, revenue })).sort((a, b) => a.month.localeCompare(b.month)),
+    bookingByTrainer: Object.entries(bookingByTrainer).map(([trainer, value]) => ({ trainer, value })).sort((a, b) => b.value - a.value),
+    attendanceRate: members.length ? Math.round((attendance.length / members.length) * 100) : 0,
+    membershipMix: subscriptions.reduce((acc, subscription) => {
+      acc[subscription.plan] = (acc[subscription.plan] || 0) + 1
+      return acc
+    }, {}),
+    latest: {
+      bookings: bookings.slice(-5),
+      payments: payments.slice(-5),
+      attendance: attendance.slice(-5),
+    },
+  })
+})
+
+app.use((_req, res) => {
+  res.status(404).json({ error: 'Route not found' })
+})
+
+app.use((error, _req, res, _next) => {
+  console.error('API error:', error)
+  res.status(500).json({ error: 'Internal server error' })
 })
 
 async function start() {
-  if (MONGODB_URI) {
-    try {
-      await mongoose.connect(MONGODB_URI)
-      connectedToMongo = true
-      console.log('Connected to MongoDB')
-    } catch (error) {
-      console.warn('MongoDB unavailable, using in-memory store:', error.message)
-    }
+  try {
+    await mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    connectedToMongo = true
+    console.log('Connected to MongoDB:', MONGODB_URI.includes('@') ? 'atlas/remote' : MONGODB_URI)
+  } catch (error) {
+    console.warn('MongoDB unavailable, falling back to in-memory store:', error.message)
   }
 
   app.listen(PORT, () => {

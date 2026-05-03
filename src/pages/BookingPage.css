@@ -1,34 +1,86 @@
 .booking-page {
-  min-height: 100vh;
+  position: relative;
+}
+
+.booking-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(124,255,73,0.11), transparent 20%),
+    radial-gradient(circle at 82% 18%, rgba(124,255,73,0.06), transparent 16%);
+  z-index: -1;
 }
 
 .booking-header {
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 
 .booking-header h2 {
   font-size: 2rem;
 }
 
+.booking-tabs {
+  margin-bottom: 24px;
+}
+
+.booking-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.booking-type-card {
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.booking-type-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(124,255,73,0.26);
+  box-shadow: 0 0 0 1px rgba(124,255,73,0.12), var(--shadow-accent);
+}
+
+.booking-type-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(124,255,73,0.18), 0 0 24px rgba(124,255,73,0.12);
+  background: linear-gradient(180deg, rgba(20,20,20,0.98), rgba(11,11,11,0.98));
+}
+
+.booking-type-card h3 {
+  margin-bottom: 8px;
+}
+
+.booking-type-card p {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  margin-bottom: 14px;
+}
+
+.booking-type-price {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
 .booking-stats {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: 24px;
 }
 
 .booking-grid {
   display: grid;
-  grid-template-columns: 1.25fr 0.95fr;
+  grid-template-columns: 1.3fr 0.9fr;
   gap: 18px;
 }
   
   /* Trainers Section */
   .trainers-section,
   .booking-summary {
-    background: rgba(20, 20, 20, 0.96);
-    backdrop-filter: blur(12px);
-    border-radius: var(--radius-lg);
     padding: 24px;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
   }
 
   .trainers-section h3,
@@ -44,7 +96,7 @@
 
   .trainers-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 14px;
   }
 
@@ -147,14 +199,17 @@
   }
   
   .session-type {
-    margin-bottom: 25px;
+    margin-bottom: 22px;
   }
-  
-  .session-type label {
+
+  .section-label {
     display: block;
-    color: #ccc;
+    color: var(--text-muted);
     margin-bottom: 10px;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
   
   .type-options {
@@ -166,48 +221,47 @@
   .type-btn {
     flex: 1;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
     border-radius: 12px;
     color: #fff;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: border-color var(--transition), background var(--transition), transform var(--transition);
+    font-size: 0.84rem;
+    font-weight: 600;
   }
   
   .type-btn.active {
-    background: var(--accent);
+    background: rgba(124,255,73,0.18);
     border-color: var(--accent);
+    color: #eaffdf;
   }
   
   .type-btn:hover {
-    background: rgba(124,255,73,0.42);
+    background: rgba(124,255,73,0.10);
+    transform: translateY(-1px);
   }
   
   .time-slots {
     margin-bottom: 20px;
   }
   
-  .time-slots label {
-    display: block;
-    color: #ccc;
-    margin-bottom: 10px;
-    font-weight: 500;
-  }
-  
   .slots-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 10px;
   }
   
   .slot-btn {
-    padding: 10px 18px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 999px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
     color: #fff;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all var(--transition);
+    font-size: 0.82rem;
+    font-weight: 600;
   }
   
   .slot-btn:hover {
@@ -216,8 +270,9 @@
   }
   
   .slot-btn.selected {
-    background: var(--accent);
+    background: rgba(124,255,73,0.18);
     border-color: var(--accent);
+    color: #eaffdf;
   }
   
   .price-row {
@@ -238,30 +293,48 @@
   
   .book-btn {
     width: 100%;
-    padding: 16px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-    color: #06110a;
-    border: none;
-    border-radius: 14px;
-    font-size: 16px;
+    justify-content: center;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 0.9rem;
     font-weight: 800;
-    cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 0 22px rgba(124,255,73,0.14);
+    letter-spacing: 0.04em;
+    margin-top: 4px;
   }
   
   .book-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(124,255,73,0.28);
+    transform: translateY(-1px);
   }
   
   .select-prompt {
     text-align: center;
     color: #888;
-    padding: 40px;
+    padding: 56px 20px;
+    border: 1px dashed rgba(124,255,73,0.2);
+    border-radius: 14px;
+    background: rgba(8,8,8,0.62);
+  }
+
+  .select-prompt h4 {
+    margin-bottom: 4px;
+  }
+
+  .select-prompt p {
+    color: var(--text-muted);
+    font-size: 0.88rem;
   }
   
   /* Mobile Responsive */
+  @media (max-width: 1100px) {
+    .booking-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .booking-summary {
+      position: static;
+    }
+  }
+
   @media (max-width: 768px) {
     .booking-grid {
       grid-template-columns: 1fr;
@@ -281,10 +354,20 @@
     }
     
     .slots-grid {
-      justify-content: center;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .booking-stats {
       grid-template-columns: 1fr 1fr;
+    }
+
+    .booking-types-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .booking-stats {
+      grid-template-columns: 1fr;
     }
   }

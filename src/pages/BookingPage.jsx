@@ -10,6 +10,7 @@ export default function BookingPage() {
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [sessionType, setSessionType] = useState('single');
+  const [tab, setTab] = useState('builder');
 
   const bookingTrainers = trainers.map(trainer => ({
     ...trainer,
@@ -41,7 +42,33 @@ export default function BookingPage() {
         <p>Choose your trainer and preferred time slot</p>
       </div>
 
-      <div className="stats-grid booking-stats" style={{ marginBottom: 28 }}>
+      <div className="tabs booking-tabs">
+        <button className={`tab ${tab === 'builder' ? 'active' : ''}`} onClick={() => setTab('builder')}>
+          Session Builder
+        </button>
+        <button className={`tab ${tab === 'types' ? 'active' : ''}`} onClick={() => setTab('types')}>
+          Session Types
+        </button>
+      </div>
+
+      {tab === 'types' && (
+        <div className="booking-types-grid">
+          <div className={`card booking-type-card ${sessionType === 'single' ? 'active' : ''}`} onClick={() => setSessionType('single')}>
+            <h3>Single Session</h3>
+            <p>Perfect for flexible scheduling with your preferred trainer.</p>
+            <div className="booking-type-price">AED {selectedTrainer?.price || 130}</div>
+            <span className="badge badge-success">Pay Per Session</span>
+          </div>
+          <div className={`card booking-type-card ${sessionType === 'package' ? 'active' : ''}`} onClick={() => setSessionType('package')}>
+            <h3>4-Session Package</h3>
+            <p>Train consistently and save on every session block.</p>
+            <div className="booking-type-price">AED {(selectedTrainer?.price || 130) * 4}</div>
+            <span className="badge badge-accent">Save 10%</span>
+          </div>
+        </div>
+      )}
+
+      <div className="stats-grid booking-stats">
         <div className="stat-card">
           <div className="stat-icon"><UsersIcon size={18} /></div>
           <div className="stat-label">Trainers</div>
@@ -65,7 +92,7 @@ export default function BookingPage() {
       </div>
 
       <div className="booking-grid">
-        <div className="trainers-section">
+        <div className="card trainers-section">
           <h3>Select Trainer</h3>
           <div className="trainers-list">
             {bookingTrainers.map(trainer => (
@@ -91,7 +118,7 @@ export default function BookingPage() {
           </div>
         </div>
 
-        <div className="booking-summary">
+        <div className="card booking-summary">
           <h3>Booking Summary</h3>
           
           {selectedTrainer ? (
@@ -103,7 +130,7 @@ export default function BookingPage() {
               </div>
 
               <div className="session-type">
-                <label>Session Type:</label>
+                <label className="section-label">Session Type</label>
                 <div className="type-options">
                   <button 
                     className={`type-btn ${sessionType === 'single' ? 'active' : ''}`}
@@ -121,7 +148,7 @@ export default function BookingPage() {
               </div>
               
               <div className="time-slots">
-                <label>Select Time:</label>
+                <label className="section-label">Select Time</label>
                 <div className="slots-grid">
                   {timeSlots.map(slot => (
                     <button 
@@ -150,12 +177,15 @@ export default function BookingPage() {
                 </div>
               </div>
               
-              <button className="book-btn" onClick={handleBooking}>
+              <button className="btn btn-primary book-btn" onClick={handleBooking}>
                 Proceed to Checkout
               </button>
             </>
           ) : (
-            <p className="select-prompt">Select a trainer to continue</p>
+            <div className="select-prompt">
+              <h4>Booking Summary</h4>
+              <p>Select a trainer to continue</p>
+            </div>
           )}
         </div>
       </div>

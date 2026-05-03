@@ -5,12 +5,7 @@ import bcrypt from 'bcryptjs'
 dotenv.config({ path: 'server/.env' })
 dotenv.config()
 
-const MONGODB_URI = process.env.MONGODB_URI
-
-if (!MONGODB_URI) {
-  console.error('Missing MONGODB_URI. Set it in server/.env or .env before running seed.')
-  process.exit(1)
-}
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ironcore'
 
 const userSchema = new mongoose.Schema({
   name: String,
@@ -27,6 +22,51 @@ const memberSchema = new mongoose.Schema({
   status: String,
   joined: String,
   expiry: String,
+}, { timestamps: true })
+
+const trainerSchema = new mongoose.Schema({
+  userId: String,
+  name: String,
+  specialty: String,
+  bio: String,
+  rating: Number,
+  sessions: Number,
+  price: Number,
+  availability: [String],
+  active: Boolean,
+  avatar: String,
+}, { timestamps: true })
+
+const membershipPlanSchema = new mongoose.Schema({
+  name: String,
+  price: Number,
+  period: String,
+  features: [String],
+  members: Number,
+  active: Boolean,
+  popular: Boolean,
+}, { timestamps: true })
+
+const categorySchema = new mongoose.Schema({
+  name: String,
+  description: String,
+  color: String,
+  active: Boolean,
+}, { timestamps: true })
+
+const bookingSchema = new mongoose.Schema({
+  memberId: String,
+  trainerId: String,
+  member: String,
+  trainer: String,
+  date: String,
+  time: String,
+  duration: Number,
+  type: String,
+  status: String,
+  invoice: String,
+  createdBy: String,
+  notes: String,
 }, { timestamps: true })
 
 const sessionSchema = new mongoose.Schema({
@@ -93,6 +133,10 @@ const WorkoutPlan = mongoose.model('WorkoutPlan', workoutPlanSchema)
 const Subscription = mongoose.model('Subscription', subscriptionSchema)
 const Attendance = mongoose.model('Attendance', attendanceSchema)
 const Message = mongoose.model('Message', messageSchema)
+const Trainer = mongoose.model('Trainer', trainerSchema)
+const MembershipPlan = mongoose.model('MembershipPlan', membershipPlanSchema)
+const Category = mongoose.model('Category', categorySchema)
+const Booking = mongoose.model('Booking', bookingSchema)
 
 async function run() {
   await mongoose.connect(MONGODB_URI)
@@ -100,6 +144,10 @@ async function run() {
   await Promise.all([
     User.deleteMany({}),
     Member.deleteMany({}),
+    Trainer.deleteMany({}),
+    MembershipPlan.deleteMany({}),
+    Category.deleteMany({}),
+    Booking.deleteMany({}),
     Session.deleteMany({}),
     Payment.deleteMany({}),
     WorkoutPlan.deleteMany({}),
@@ -125,6 +173,22 @@ async function run() {
     { trainer: 'James Okafor', member: 'Ahmed Khalil', date: '2025-03-27', time: '09:00', duration: 60, type: 'Strength', status: 'confirmed', invoice: 'INV-001' },
     { trainer: 'Lisa Chen', member: 'Sara Al Mansoori', date: '2025-03-27', time: '10:30', duration: 45, type: 'Yoga', status: 'confirmed', invoice: 'INV-002' },
   ]
+
+  const bookings = sessions.map((session, index) => ({
+    id: index + 1,
+    memberId: index === 0 ? '3' : '1',
+    trainerId: index === 0 ? '1' : '2',
+    member: session.member,
+    trainer: session.trainer,
+    date: session.date,
+    time: session.time,
+    duration: session.duration,
+    type: session.type,
+    status: session.status,
+    invoice: session.invoice,
+    createdBy: '1',
+    notes: '',
+  }))
 
   const payments = [
     { member: 'Ahmed Khalil', plan: 'Elite', amount: 499, date: '2025-03-01', method: 'Card', status: 'paid' },
@@ -161,6 +225,26 @@ async function run() {
     },
   ]
 
+  const trainers = [
+    { userId: '2', name: 'James Okafor', specialty: 'Strength & Conditioning', bio: 'Focused on progressive overload and injury-aware coaching.', rating: 4.9, sessions: 142, price: 150, availability: ['Mon', 'Tue', 'Thu', 'Fri'], active: true, avatar: 'J' },
+    { userId: '', name: 'Lisa Chen', specialty: 'Yoga & Pilates', bio: 'Mobility, posture, and recovery-driven sessions.', rating: 4.8, sessions: 118, price: 130, availability: ['Mon', 'Wed', 'Fri'], active: true, avatar: 'L' },
+    { userId: '', name: 'Mark Torres', specialty: 'HIIT & Cardio', bio: 'Fast-paced conditioning and fat-loss programs.', rating: 4.7, sessions: 97, price: 160, availability: ['Tue', 'Thu', 'Sat'], active: false, avatar: 'M' },
+    { userId: '', name: 'Aisha Al Zaabi', specialty: 'Nutrition & Wellness', bio: 'Lifestyle, nutrition, and sustainable habit coaching.', rating: 4.9, sessions: 85, price: 140, availability: ['Mon', 'Wed', 'Sat'], active: true, avatar: 'A' },
+  ]
+
+  const plans = [
+    { name: 'Basic', price: 149, period: 'month', features: ['Full gym access', 'Locker room', 'Basic equipment'], members: 420, active: true, popular: false },
+    { name: 'Pro', price: 299, period: 'month', features: ['All Basic features', '2 trainer sessions/month', 'Nutrition guide'], members: 580, active: true, popular: true },
+    { name: 'Elite', price: 499, period: 'month', features: ['All Pro features', 'Unlimited trainer sessions', 'Priority booking'], members: 200, active: true, popular: false },
+    { name: 'Annual Basic', price: 1490, period: 'year', features: ['All Basic features', '2 months free', 'Annual health check'], members: 85, active: true, popular: false },
+  ]
+
+  const categories = [
+    { name: 'Strength', description: 'Compound lifting and power development', color: '#7CFF49', active: true },
+    { name: 'Cardio', description: 'Endurance and conditioning classes', color: '#3b82f6', active: true },
+    { name: 'Mobility', description: 'Flexibility and recovery sessions', color: '#a855f7', active: true },
+  ]
+
   const subscriptions = [
     { member: 'Sara Al Mansoori', plan: 'Pro', start: '2025-01-01', end: '2025-03-31', status: 'active', autoRenew: true },
     { member: 'Ahmed Khalil', plan: 'Elite', start: '2024-11-02', end: '2025-11-02', status: 'active', autoRenew: true },
@@ -176,6 +260,10 @@ async function run() {
   await Promise.all([
     User.insertMany(users),
     Member.insertMany(members),
+    Trainer.insertMany(trainers),
+    MembershipPlan.insertMany(plans),
+    Category.insertMany(categories),
+    Booking.insertMany(bookings),
     Session.insertMany(sessions),
     Payment.insertMany(payments),
     WorkoutPlan.insertMany(workouts),

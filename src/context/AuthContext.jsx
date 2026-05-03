@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { api } from '../lib/api'
+import { addNotification } from '../lib/notifications'
 
 const AuthContext = createContext(null)
 
@@ -97,6 +98,12 @@ export function AuthProvider({ children }) {
         setUser(result.user)
         localStorage.setItem(USER_KEY, JSON.stringify(result.user))
         localStorage.setItem(TOKEN_KEY, result.token)
+        addNotification({
+          title: 'Welcome Back',
+          message: `Signed in as ${result.user.name}.`,
+          type: 'info',
+          link: '/dashboard',
+        })
         announceAuthChanged()
         return { success: true, user: result.user }
       } catch (error) {
@@ -110,6 +117,12 @@ export function AuthProvider({ children }) {
     const { password: _, ...safeUser } = found
     setUser(safeUser)
     localStorage.setItem(USER_KEY, JSON.stringify(safeUser))
+    addNotification({
+      title: 'Welcome Back',
+      message: `Signed in as ${safeUser.name}.`,
+      type: 'info',
+      link: '/dashboard',
+    })
     announceAuthChanged()
     return { success: true, user: safeUser }
   }
@@ -121,6 +134,12 @@ export function AuthProvider({ children }) {
         setUser(result.user)
         localStorage.setItem(USER_KEY, JSON.stringify(result.user))
         localStorage.setItem(TOKEN_KEY, result.token)
+        addNotification({
+          title: 'Account Created',
+          message: `Welcome to IronCore, ${result.user.name}.`,
+          type: 'success',
+          link: '/dashboard',
+        })
         announceAuthChanged()
         return { success: true, user: result.user }
       } catch (error) {
@@ -134,15 +153,28 @@ export function AuthProvider({ children }) {
     setUsers(current => [...current, { ...newUser, password }])
     setUser(newUser)
     localStorage.setItem(USER_KEY, JSON.stringify(newUser))
+    addNotification({
+      title: 'Account Created',
+      message: `Welcome to IronCore, ${newUser.name}.`,
+      type: 'success',
+      link: '/dashboard',
+    })
     addMemberSnapshotFromSignup({ name, email })
     announceAuthChanged()
     return { success: true, user: newUser }
   }
 
   const logout = () => {
+    const currentName = user?.name || 'User'
     setUser(null)
     localStorage.removeItem(USER_KEY)
     localStorage.removeItem(TOKEN_KEY)
+    addNotification({
+      title: 'Signed Out',
+      message: `${currentName} has signed out.`,
+      type: 'warning',
+      link: '/login',
+    })
     announceAuthChanged()
   }
 

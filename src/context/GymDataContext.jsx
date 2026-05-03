@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { api, getStoredToken } from '../lib/api'
+import { addNotification, getMotivationalQuote } from '../lib/notifications'
 
 const GymDataContext = createContext(null)
 
@@ -246,11 +247,23 @@ export function GymDataProvider({ children }) {
       try {
         const created = normalizeRecord(await api.create('attendance', payload))
         setAttendance(current => [created, ...current])
+        addNotification({
+          title: 'Member Checked In',
+          message: `${memberName} checked in at ${now}. ${getMotivationalQuote()}`,
+          type: 'success',
+          link: '/attendance',
+        })
         return { success: true, time: now }
       } catch {}
     }
 
     setAttendance(current => [...current, { ...payload, id: Date.now() }])
+    addNotification({
+      title: 'Member Checked In',
+      message: `${memberName} checked in at ${now}. ${getMotivationalQuote()}`,
+      type: 'success',
+      link: '/attendance',
+    })
     return { success: true, time: now }
   }
 
@@ -271,6 +284,12 @@ export function GymDataProvider({ children }) {
     }
 
     setAttendance(current => current.map(record => (String(record.id) === String(id) ? { ...record, ...updates } : record)))
+    addNotification({
+      title: 'Member Checked Out',
+      message: `${target.member} checked out at ${now}.`,
+      type: 'info',
+      link: '/attendance',
+    })
     return now
   }
 
@@ -296,6 +315,12 @@ export function GymDataProvider({ children }) {
       } catch {}
     }
     setPayments(current => current.map(payment => (String(payment.id) === String(id) ? { ...payment, status: 'paid' } : payment)))
+    addNotification({
+      title: 'Payment Received',
+      message: `Invoice ${id} marked as paid.`,
+      type: 'success',
+      link: '/payments',
+    })
   }
 
   const refundPayment = async id => {
@@ -305,6 +330,12 @@ export function GymDataProvider({ children }) {
       } catch {}
     }
     setPayments(current => current.map(payment => (String(payment.id) === String(id) ? { ...payment, status: 'refunded' } : payment)))
+    addNotification({
+      title: 'Payment Refunded',
+      message: `Invoice ${id} has been refunded.`,
+      type: 'warning',
+      link: '/payments',
+    })
   }
 
   const addWorkoutPlan = async plan => {
@@ -353,6 +384,12 @@ export function GymDataProvider({ children }) {
       } catch {}
     }
     setSubscriptions(current => current.map(subscription => (String(subscription.id) === String(id) ? { ...subscription, status: 'active' } : subscription)))
+    addNotification({
+      title: 'Subscription Renewed',
+      message: `Subscription #${id} is now active.`,
+      type: 'success',
+      link: '/plans',
+    })
   }
 
   const cancelSubscription = async id => {
@@ -362,6 +399,12 @@ export function GymDataProvider({ children }) {
       } catch {}
     }
     setSubscriptions(current => current.map(subscription => (String(subscription.id) === String(id) ? { ...subscription, status: 'expired' } : subscription)))
+    addNotification({
+      title: 'Subscription Cancelled',
+      message: `Subscription #${id} was cancelled.`,
+      type: 'warning',
+      link: '/plans',
+    })
   }
 
   const upsertSubscription = async payload => {
@@ -397,6 +440,12 @@ export function GymDataProvider({ children }) {
   const saveContactMessage = async message => {
     const payload = { ...message, id: Date.now(), submittedAt: new Date().toISOString() }
     setContactMessages(current => [...current, payload])
+    addNotification({
+      title: 'New Contact Message',
+      message: `Message received from ${message.name || 'visitor'}.`,
+      type: 'info',
+      link: '/contact',
+    })
 
     if (apiOnline) {
       try {
@@ -435,6 +484,13 @@ export function GymDataProvider({ children }) {
       invoice: invoice.id,
     })
 
+    addNotification({
+      title: 'Session Booked',
+      message: `${member} booked ${pendingBooking.trainer.name} at ${pendingBooking.timeSlot}. ${getMotivationalQuote()}`,
+      type: 'success',
+      link: '/booking',
+    })
+
     setPendingBooking(null)
     return { success: true, invoice }
   }
@@ -468,6 +524,13 @@ export function GymDataProvider({ children }) {
       status: 'active',
       autoRenew: true,
       invoice: invoice.id,
+    })
+
+    addNotification({
+      title: 'Plan Purchased',
+      message: `${member} purchased ${pendingPlanPurchase.name}. ${getMotivationalQuote()}`,
+      type: 'success',
+      link: '/plans',
     })
 
     setPendingPlanPurchase(null)

@@ -56,13 +56,8 @@ const NAV_ITEMS = [
 ]
 
 export default function Sidebar() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
-
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
 
   const visibleItems = NAV_ITEMS.filter(item => item.roles.includes(user?.role))
 
@@ -98,14 +93,6 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
-      {/* Logout */}
-      <div className="sidebar-footer">
-        <button className="logout-btn" onClick={handleLogout}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{marginRight:8}} xmlns="http://www.w3.org/2000/svg"><path d="M16 17l5-5-5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/><path d="M21 12H9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 19H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          Logout
-        </button>
-      </div>
     </aside>
   )
 }
