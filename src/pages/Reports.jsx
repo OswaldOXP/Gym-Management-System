@@ -108,11 +108,15 @@ export default function Reports() {
             <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
             <XAxis dataKey="month" tick={{ fill:'#888', fontSize:11 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill:'#888', fontSize:11 }} axisLine={false} tickLine={false} />
-            <Tooltip {...tooltipStyle} formatter={v => [`AED ${v.toLocaleString()}`, '']} />
+            <Tooltip
+              {...tooltipStyle}
+              cursor={{ fill: 'rgba(124,255,73,0.08)' }}
+              formatter={v => [`AED ${v.toLocaleString()}`, '']}
+            />
             <Legend wrapperStyle={{ fontSize:12, color:'#888' }} />
-            <Bar dataKey="basic" name="Basic" stackId="a" fill="#3b82f6" />
-            <Bar dataKey="pro"   name="Pro"   stackId="a" fill="#7CFF49" />
-            <Bar dataKey="elite" name="Elite" stackId="a" fill="#a855f7" radius={[4,4,0,0]} />
+            <Bar dataKey="basic" name="Basic" stackId="a" fill="#3b82f6" activeBar={{ fill: '#5c97ff', stroke: 'none' }} />
+            <Bar dataKey="pro"   name="Pro"   stackId="a" fill="#7CFF49" activeBar={{ fill: '#93ff67', stroke: 'none' }} />
+            <Bar dataKey="elite" name="Elite" stackId="a" fill="#a855f7" radius={[4,4,0,0]} activeBar={{ fill: '#c076ff', stroke: 'none' }} />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -71,6 +71,7 @@ export default function Dashboard() {
     .filter(payment => payment.date === today && payment.status === 'paid')
     .reduce((total, payment) => total + Number(payment.amount || 0), 0)
   const checkInRate = members.length ? Math.round((todayAttendance.length / members.length) * 100) : 0
+  const safeCheckInRate = Math.max(0, Math.min(checkInRate, 100))
 
   const adminOverview = [
     {
@@ -178,7 +179,7 @@ export default function Dashboard() {
                   <div
                     className="overview-ring-shell"
                     style={{
-                      background: `conic-gradient(var(--accent) 0 ${Math.max(checkInRate, 8)}%, rgba(255,255,255,0.08) ${Math.max(checkInRate, 8)}% 100%)`,
+                      background: `conic-gradient(var(--accent) 0 ${safeCheckInRate}%, rgba(255,255,255,0.08) ${safeCheckInRate}% 100%)`,
                     }}
                   >
                     <div className="overview-ring-inner">
@@ -209,8 +210,17 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
                   <XAxis dataKey="month" tick={{ fill: '#888', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: '#888', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip {...tooltipStyle} formatter={v => [`AED ${v.toLocaleString()}`, 'Revenue']} />
-                  <Bar dataKey="revenue" fill="#7CFF49" radius={[6, 6, 0, 0]} />
+                  <Tooltip
+                    {...tooltipStyle}
+                    cursor={{ fill: 'rgba(124,255,73,0.08)' }}
+                    formatter={value => [`AED ${Number(value).toLocaleString()}`, 'Revenue']}
+                  />
+                  <Bar
+                    dataKey="revenue"
+                    fill="#7CFF49"
+                    activeBar={{ fill: '#95ff6a', stroke: '#b3ff8f', strokeWidth: 1 }}
+                    radius={[6, 6, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>

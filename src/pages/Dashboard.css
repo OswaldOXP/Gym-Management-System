@@ -90,16 +90,18 @@
 }
 
 .overview-ring-ring {
-  width: min(100%, 230px);
+  width: min(100%, 190px);
   aspect-ratio: 1;
 }
 
 .overview-ring-shell {
   width: 100%;
   height: 100%;
-  padding: 16px;
+  padding: 14px;
   border-radius: 50%;
-  box-shadow: 0 0 28px rgba(124,255,73,0.14);
+  box-shadow:
+    0 0 0 1px rgba(124,255,73,0.08) inset,
+    0 0 28px rgba(124,255,73,0.12);
 }
 
 .overview-ring-inner {
@@ -113,6 +115,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+  gap: 0;
 }
 
 .overview-ring-metrics {
@@ -142,8 +145,25 @@
   font-size: 1.3rem;
 }
 
+.ring-number {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 5.4vw, 3.9rem);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: 0.02em;
+  margin-bottom: -2px;
+}
+
+.ring-label {
+  margin-top: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
 .dashboard-mini-bars {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .dashboard-bottom-simple {

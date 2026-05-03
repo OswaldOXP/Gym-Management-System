@@ -19,7 +19,24 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "health"]
             },
-            "description": "Checks whether the backend is running."
+            "description": "Checks whether the backend is running.",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('health endpoint returns 200', function () {",
+                    "  pm.response.to.have.status(200);",
+                    "});",
+                    "pm.test('health endpoint confirms backend', function () {",
+                    "  const data = pm.response.json();",
+                    "  pm.expect(data.ok).to.eql(true);",
+                    "});"
+                  ]
+                }
+              }
+            ]
           }
         },
         {
@@ -51,7 +68,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@ironcore.com\",\n  \"password\": \"admin123\"\n}",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -70,6 +87,9 @@
                     "  const data = pm.response.json();",
                     "  if (data.token) {",
                     "    pm.environment.set('token', data.token);",
+                    "    if (data.user && data.user._id) {",
+                    "      pm.environment.set('userId', data.user._id);",
+                    "    }",
                     "  }",
                     "}"
                   ]

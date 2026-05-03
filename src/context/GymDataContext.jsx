@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { api, getStoredToken } from '../lib/api'
 import { addNotification, getMotivationalQuote } from '../lib/notifications'
 
@@ -128,7 +128,7 @@ export function GymDataProvider({ children }) {
   const [pendingPlanPurchase, setPendingPlanPurchase] = useStoredState(STORAGE_KEYS.pendingPlanPurchase, null)
   const [contactMessages, setContactMessages] = useStoredState(STORAGE_KEYS.contactMessages, [])
 
-  const refreshFromApi = async () => {
+  const refreshFromApi = useCallback(async () => {
     const token = getStoredToken()
     try {
       const health = await api.health()
@@ -152,20 +152,51 @@ export function GymDataProvider({ children }) {
         api.list('subscriptions'),
       ])
 
-      if (Array.isArray(membersData) && membersData.length) setMembers(membersData.map(normalizeRecord))
-      if (Array.isArray(sessionsData) && sessionsData.length) setSessions(sessionsData.map(normalizeRecord))
-      if (Array.isArray(attendanceData) && attendanceData.length) setAttendance(attendanceData.map(normalizeRecord))
-      if (Array.isArray(paymentsData) && paymentsData.length) setPayments(paymentsData.map(normalizeRecord))
-      if (Array.isArray(workoutsData) && workoutsData.length) setWorkoutPlans(workoutsData.map(normalizeRecord))
-      if (Array.isArray(subscriptionsData) && subscriptionsData.length) setSubscriptions(subscriptionsData.map(normalizeRecord))
+      if (Array.isArray(membersData)) setMembers(membersData.map(normalizeRecord))
+      if (Array.isArray(sessionsData)) setSessions(sessionsData.map(normalizeRecord))
+      if (Array.isArray(attendanceData)) setAttendance(attendanceData.map(normalizeRecord))
+      if (Array.isArray(paymentsData)) setPayments(paymentsData.map(normalizeRecord))
+      if (Array.isArray(workoutsData)) setWorkoutPlans(workoutsData.map(normalizeRecord))
+      if (Array.isArray(subscriptionsData)) setSubscriptions(subscriptionsData.map(normalizeRecord))
     } catch {
       setApiOnline(false)
     }
-  }
+  }, [setMembers, setSessions, setAttendance, setPayments, setWorkoutPlans, setSubscriptions])
 
   useEffect(() => {
     refreshFromApi()
   }, [syncVersion])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      refreshFromApi()
+    }, 5000)
+
+    return () => window.clearInterval(timer)
+  }, [refreshFromApi])
+
+  useEffect(() => {
+    const apiBase = import.meta.env.VITE_API_BASE_URL || ''
+    const streamUrl = apiBase ? `${apiBase}/api/events` : '/api/events'
+    const source = new EventSource(streamUrl)
+
+    source.onmessage = event => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data?.type === 'data-changed') {
+          refreshFromApi()
+        }
+      } catch {
+        // Ignore non-JSON keepalive messages.
+      }
+    }
+
+    source.onerror = () => {
+      setApiOnline(false)
+    }
+
+    return () => source.close()
+  }, [refreshFromApi])
 
   useEffect(() => {
     const handleAuthChanged = () => setSyncVersion(v => v + 1)

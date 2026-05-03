@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useGymData } from '../context/GymDataContext'
 import { DumbbellIcon, FireIcon, CalendarIcon, SearchIcon, TrashIcon } from '../components/ModernIcons'
 import './WorkoutPlans.css'
@@ -12,14 +12,24 @@ const GOAL_ICONS  = {
   'Endurance': <CalendarIcon />,
 }
 
-const EMPTY_FORM = { name:'', trainer:'', goal:'Build Strength', level:'Beginner', weeks:'8', sessions:'3' }
+const EMPTY_FORM = { name: '', trainer: '', goal: 'Build Strength', level: 'Beginner', weeks: '8', sessions: '3' }
+
+function normalizePlan(plan) {
+  return {
+    ...plan,
+    exercises: Array.isArray(plan.exercises) ? plan.exercises : [],
+    assignedTo: Array.isArray(plan.assignedTo) ? plan.assignedTo : [],
+    weeks: Number(plan.weeks || 0),
+    sessions: Number(plan.sessions || 0),
+  }
+}
 
 export default function WorkoutPlans() {
   const { workoutPlans, addWorkoutPlan, deleteWorkoutPlan } = useGymData()
-  const plans = workoutPlans
+  const plans = useMemo(() => workoutPlans.map(normalizePlan), [workoutPlans])
   const [selected, setSelected] = useState(null)
-  const [modal, setModal]   = useState(null)
-  const [form, setForm]     = useState(EMPTY_FORM)
+  const [modal, setModal] = useState(null)
+  const [form, setForm] = useState(EMPTY_FORM)
   const [search, setSearch] = useState('')
 
   const filtered = plans.filter(p =>
@@ -29,109 +39,140 @@ export default function WorkoutPlans() {
   )
 
   const openView = p => { setSelected(p); setModal('view') }
-  const openAdd  = () => { setForm(EMPTY_FORM); setModal('add') }
-  const openDel  = p => { setSelected(p); setModal('delete') }
+  const openDel = p => { setSelected(p); setModal('delete') }
   const closeModal = () => { setModal(null); setSelected(null) }
 
   const handleForm = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
   const handleSave = () => {
     if (!form.name || !form.trainer) return
     addWorkoutPlan({ ...form, assignedTo: [], exercises: [], weeks: Number(form.weeks), sessions: Number(form.sessions) })
-    closeModal()
+    setForm(EMPTY_FORM)
   }
   const handleDelete = () => { deleteWorkoutPlan(selected.id); closeModal() }
 
   const totalMembers = plans.reduce((a,p) => a+p.assignedTo.length, 0)
   const trainerCount = [...new Set(plans.map(p=>p.trainer))].length
+  const avgSessionsPerWeek = plans.length
+    ? (plans.reduce((sum, plan) => sum + Number(plan.sessions || 0), 0) / plans.length).toFixed(1)
+    : '0.0'
 
   return (
     <div className="workout-plans-page">
-      {/* Hero Section */}
-      <div className="dashboard-hero">
+      <div className="page-header">
         <div>
-          <p className="dashboard-kicker">Training Programs</p>
           <h2>Workout Plans</h2>
           <p>Create and assign structured exercise programs to members.</p>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="stats-grid dashboard-stats-grid" style={{ marginBottom: 24 }}>
-        <div className="stat-card dashboard-stat-card">
+      <div className="stats-grid" style={{ marginBottom: 24 }}>
+        <div className="stat-card">
           <div className="stat-icon"><DumbbellIcon /></div>
           <div className="stat-label">Total Plans</div>
           <div className="stat-value">{plans.length}</div>
         </div>
-        <div className="stat-card dashboard-stat-card">
+        <div className="stat-card">
           <div className="stat-icon"><CalendarIcon /></div>
           <div className="stat-label">Members Assigned</div>
           <div className="stat-value">{totalMembers}</div>
         </div>
-        <div className="stat-card dashboard-stat-card">
+        <div className="stat-card">
           <div className="stat-icon"><FireIcon /></div>
           <div className="stat-label">Active Trainers</div>
           <div className="stat-value">{trainerCount}</div>
         </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="toolbar-wrap">
-        <div className="search-input-wrap">
-          <span className="search-icon"><SearchIcon size={16} /></span>
-          <input className="form-input" placeholder="Search plans, trainers…" value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="stat-card">
+          <div className="stat-icon"><CalendarIcon /></div>
+          <div className="stat-label">Avg. Sessions / Week</div>
+          <div className="stat-value">{avgSessionsPerWeek}</div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>+ New Plan</button>
       </div>
 
-      {/* Plan Cards Grid */}
-      <div className="workout-grid">
-        {filtered.length > 0 ? filtered.map(p => (
-          <div key={p.id} className="card workout-card">
-            <div className="workout-card-header">
-              <div className="workout-card-icon">{GOAL_ICONS[p.goal] || <DumbbellIcon />}</div>
-              <span className={`badge badge-${LEVEL_COLOR[p.level]}`}>{p.level}</span>
-            </div>
-            
-            <h4 className="workout-card-title">{p.name}</h4>
-            <p className="workout-card-trainer">by {p.trainer}</p>
-            
-            <div className="workout-card-meta">
-              <div><strong>{p.weeks}</strong><span>Weeks</span></div>
-              <div><strong>{p.sessions}</strong><span>Sessions/wk</span></div>
-              <div><strong>{p.exercises.length}</strong><span>Exercises</span></div>
-              <div><strong>{p.assignedTo.length}</strong><span>Members</span></div>
-            </div>
-            
-            <div className="workout-card-goal">
-              <span className="badge badge-accent">{p.goal}</span>
-            </div>
-            
-            {p.assignedTo.length > 0 && (
-              <div className="workout-card-members">
-                {p.assignedTo.slice(0, 3).map(m => (
-                  <span key={m} className="member-tag">{m.split(' ')[0]}</span>
-                ))}
-                {p.assignedTo.length > 3 && <span className="member-tag more">+{p.assignedTo.length - 3}</span>}
-              </div>
-            )}
-            
-            <div className="workout-card-actions">
-              <button className="btn btn-outline btn-sm" style={{ flex:1 }} onClick={() => openView(p)}>View</button>
-              <button className="btn btn-ghost btn-sm" onClick={() => openDel(p)}><TrashIcon size={16} /></button>
-            </div>
-          </div>
-        )) : (
-          <div className="empty-state" style={{ gridColumn: '1/-1' }}>
-            <DumbbellIcon size={48} style={{ opacity: 0.5, marginBottom: 12 }} />
-            <p style={{ color: 'var(--text-muted)' }}>No workout plans found</p>
-          </div>
-        )}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <h4 style={{ marginBottom: 14 }}>Quick Create Plan</h4>
+        <div className="workout-quick-form">
+          <input className="form-input" name="name" value={form.name} onChange={handleForm} placeholder="Plan name" />
+          <input className="form-input" name="trainer" value={form.trainer} onChange={handleForm} placeholder="Trainer" />
+          <select className="form-select" name="goal" value={form.goal} onChange={handleForm}>
+            {['Build Strength', 'Weight Loss', 'Flexibility', 'Muscle Gain', 'Endurance'].map(goal => <option key={goal}>{goal}</option>)}
+          </select>
+          <select className="form-select" name="level" value={form.level} onChange={handleForm}>
+            {['Beginner', 'Intermediate', 'Advanced', 'All Levels'].map(level => <option key={level}>{level}</option>)}
+          </select>
+          <input className="form-input" type="number" name="weeks" value={form.weeks} onChange={handleForm} min="1" max="52" placeholder="Weeks" />
+          <input className="form-input" type="number" name="sessions" value={form.sessions} onChange={handleForm} min="1" max="7" placeholder="Sessions/wk" />
+          <button className="btn btn-primary" onClick={handleSave}>Create Plan</button>
+        </div>
       </div>
 
-      {/* View Plan Modal */}
+      <div className="toolbar">
+        <div className="search-input-wrap" style={{ minWidth: 250, flex: 1 }}>
+          <span className="search-icon"><SearchIcon size={16} /></span>
+          <input
+            className="form-input"
+            placeholder="Search plans, trainers, goals..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <span className="muted" style={{ fontSize: '0.85rem' }}>{filtered.length} records</span>
+      </div>
+
+      <div className="card" style={{ padding: 0 }}>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Plan</th>
+                <th>Trainer</th>
+                <th>Goal</th>
+                <th>Level</th>
+                <th>Duration</th>
+                <th>Sessions/wk</th>
+                <th>Members</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
+                    No workout plans found.
+                  </td>
+                </tr>
+              )}
+              {filtered.map(plan => (
+                <tr key={plan.id}>
+                  <td style={{ fontWeight: 600 }}>
+                    <div className="workout-plan-cell">
+                      <span className="workout-plan-icon">{GOAL_ICONS[plan.goal] || <DumbbellIcon size={14} />}</span>
+                      <span>{plan.name}</span>
+                    </div>
+                  </td>
+                  <td>{plan.trainer}</td>
+                  <td><span className="badge badge-accent">{plan.goal}</span></td>
+                  <td><span className={`badge badge-${LEVEL_COLOR[plan.level]}`}>{plan.level}</span></td>
+                  <td>{plan.weeks} weeks</td>
+                  <td>{plan.sessions}</td>
+                  <td>{plan.assignedTo.length}</td>
+                  <td>
+                    <div className="workout-table-actions">
+                      <button className="btn btn-sm btn-outline" onClick={() => openView(plan)}>View</button>
+                      <button className="btn btn-sm btn-ghost" onClick={() => openDel(plan)}>
+                        <TrashIcon size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {modal === 'view' && selected && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" style={{ maxWidth:600 }} onClick={e => e.stopPropagation()}>
+          <div className="modal" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{selected.name}</h3>
               <button className="modal-close" onClick={closeModal}>✕</button>
@@ -186,181 +227,6 @@ export default function WorkoutPlans() {
         </div>
       )}
 
-      {/* Add Plan Modal */}
-      {modal === 'add' && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>New Workout Plan</h3>
-              <button className="modal-close" onClick={closeModal}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
-                <div className="form-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="form-label">Plan Name</label>
-                  <input className="form-input" name="name" value={form.name} onChange={handleForm} placeholder="e.g. Advanced Powerlifting" />
-                </div>
-                <div className="form-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="form-label">Trainer</label>
-                  <input className="form-input" name="trainer" value={form.trainer} onChange={handleForm} placeholder="Trainer name" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Goal</label>
-                  <select className="form-select" name="goal" value={form.goal} onChange={handleForm}>
-                    {['Build Strength','Weight Loss','Flexibility','Muscle Gain','Endurance'].map(g=><option key={g}>{g}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Level</label>
-                  <select className="form-select" name="level" value={form.level} onChange={handleForm}>
-                    {['Beginner','Intermediate','Advanced','All Levels'].map(l=><option key={l}>{l}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Duration (weeks)</label>
-                  <input className="form-input" type="number" name="weeks" value={form.weeks} onChange={handleForm} min="1" max="52" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Sessions / week</label>
-                  <input className="form-input" type="number" name="sessions" value={form.sessions} onChange={handleForm} min="1" max="7" />
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={closeModal}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSave}>Create Plan</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Modal */}
-      {modal === 'delete' && selected && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Delete Plan</h3>
-              <button className="modal-close" onClick={closeModal}>✕</button>
-            </div>
-            <div className="modal-body">
-              <p>Delete <strong>{selected.name}</strong>? This removes it for all {selected.assignedTo.length} assigned members.</p>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={closeModal}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-      {/* View Plan Modal */}
-      {modal === 'view' && selected && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" style={{ maxWidth:600 }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{selected.name}</h3>
-              <button className="modal-close" onClick={closeModal}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:20 }}>
-                <span className={`badge badge-${LEVEL_COLOR[selected.level]}`}>{selected.level}</span>
-                <span className="badge badge-accent">{selected.goal}</span>
-                <span className="muted" style={{ fontSize:'0.82rem' }}>by {selected.trainer}</span>
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:20 }}>
-                {[['Duration',`${selected.weeks} weeks`],['Frequency',`${selected.sessions}x/week`],['Members',selected.assignedTo.length]].map(([k,v])=>(
-                  <div key={k} style={{ background:'var(--surface-2)', borderRadius:'var(--radius)', padding:'12px', textAlign:'center' }}>
-                    <div style={{ fontFamily:'var(--font-display)', fontSize:'1.4rem', fontWeight:800 }}>{v}</div>
-                    <div style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>{k}</div>
-                  </div>
-                ))}
-              </div>
-              <h4 style={{ marginBottom:12 }}>Exercises</h4>
-              <div className="table-wrap">
-                <table>
-                  <thead><tr><th>Exercise</th><th>Sets</th><th>Reps/Duration</th><th>Rest</th></tr></thead>
-                  <tbody>
-                    {selected.exercises.map((e,i) => (
-                      <tr key={i}>
-                        <td style={{ fontWeight:500 }}>{e.name}</td>
-                        <td>{e.sets}</td>
-                        <td>{e.reps}</td>
-                        <td style={{ color:'var(--text-muted)' }}>{e.rest}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {selected.assignedTo.length > 0 && (
-                <>
-                  <h4 style={{ margin:'16px 0 10px' }}>Assigned Members</h4>
-                  <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                    {selected.assignedTo.map(m => (
-                      <span key={m} style={{ fontSize:'0.82rem', background:'var(--surface-2)', border:'1px solid var(--border)', borderRadius:20, padding:'4px 12px' }}>{m}</span>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={closeModal}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Plan Modal */}
-      {modal === 'add' && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>New Workout Plan</h3>
-              <button className="modal-close" onClick={closeModal}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
-                <div className="form-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="form-label">Plan Name</label>
-                  <input className="form-input" name="name" value={form.name} onChange={handleForm} placeholder="e.g. Advanced Powerlifting" />
-                </div>
-                <div className="form-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="form-label">Trainer</label>
-                  <input className="form-input" name="trainer" value={form.trainer} onChange={handleForm} placeholder="Trainer name" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Goal</label>
-                  <select className="form-select" name="goal" value={form.goal} onChange={handleForm}>
-                    {['Build Strength','Weight Loss','Flexibility','Muscle Gain','Endurance'].map(g=><option key={g}>{g}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Level</label>
-                  <select className="form-select" name="level" value={form.level} onChange={handleForm}>
-                    {['Beginner','Intermediate','Advanced','All Levels'].map(l=><option key={l}>{l}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Duration (weeks)</label>
-                  <input className="form-input" type="number" name="weeks" value={form.weeks} onChange={handleForm} min="1" max="52" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Sessions / week</label>
-                  <input className="form-input" type="number" name="sessions" value={form.sessions} onChange={handleForm} min="1" max="7" />
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={closeModal}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSave}>Create Plan</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Modal */}
       {modal === 'delete' && selected && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>

@@ -62,7 +62,6 @@ export default function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
-            <Route path="/workouts" element={<WorkoutPlans />} />
             <Route path="/workout/:id" element={<WorkoutDetail />} />
             <Route path="/trainer/:id" element={<TrainerDetail />} />
             <Route path="/checkout" element={<CheckoutPage />} />
@@ -85,6 +84,10 @@ export default function App() {
             
             <Route path="/attendance" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route index element={<AttendanceTracking />} />
+            </Route>
+
+            <Route path="/workouts" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+              <Route index element={<WorkoutPlans />} />
             </Route>
 
             <Route path="/booking" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

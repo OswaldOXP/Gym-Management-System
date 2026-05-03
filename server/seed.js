@@ -6,13 +6,21 @@ dotenv.config({ path: 'server/.env' })
 dotenv.config()
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ironcore'
+const MONGODB_DB = process.env.MONGODB_DB || 'mern'
 
 const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
-  passwordHash: String,
   role: { type: String, enum: ['admin', 'trainer', 'member'], default: 'member' },
 }, { timestamps: true })
+
+const loginInfoSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  name: String,
+  email: { type: String, unique: true },
+  passwordHash: { type: String, required: true },
+  role: { type: String, enum: ['admin', 'trainer', 'member'], default: 'member' },
+}, { timestamps: true, collection: 'Login_info' })
 
 const memberSchema = new mongoose.Schema({
   name: String,
@@ -126,6 +134,7 @@ const messageSchema = new mongoose.Schema({
 }, { timestamps: true })
 
 const User = mongoose.model('User', userSchema)
+const LoginInfo = mongoose.model('LoginInfo', loginInfoSchema, 'Login_info')
 const Member = mongoose.model('Member', memberSchema)
 const Session = mongoose.model('Session', sessionSchema)
 const Payment = mongoose.model('Payment', paymentSchema)
@@ -139,10 +148,11 @@ const Category = mongoose.model('Category', categorySchema)
 const Booking = mongoose.model('Booking', bookingSchema)
 
 async function run() {
-  await mongoose.connect(MONGODB_URI)
+  await mongoose.connect(MONGODB_URI, { dbName: MONGODB_DB })
 
   await Promise.all([
     User.deleteMany({}),
+    LoginInfo.deleteMany({}),
     Member.deleteMany({}),
     Trainer.deleteMany({}),
     MembershipPlan.deleteMany({}),
@@ -157,9 +167,15 @@ async function run() {
   ])
 
   const users = [
-    { name: 'Admin User', email: 'admin@ironcore.com', passwordHash: await bcrypt.hash('admin123', 10), role: 'admin' },
-    { name: 'John Trainer', email: 'trainer@ironcore.com', passwordHash: await bcrypt.hash('train123', 10), role: 'trainer' },
-    { name: 'Sara Member', email: 'member@ironcore.com', passwordHash: await bcrypt.hash('member123', 10), role: 'member' },
+    { name: 'Admin User', email: 'admin@ironcore.com', role: 'admin' },
+    { name: 'John Trainer', email: 'trainer@ironcore.com', role: 'trainer' },
+    { name: 'Sara Member', email: 'member@ironcore.com', role: 'member' },
+  ]
+
+  const loginInfos = [
+    { userId: '1', name: 'Admin User', email: 'admin@ironcore.com', passwordHash: await bcrypt.hash('admin123', 10), role: 'admin' },
+    { userId: '2', name: 'John Trainer', email: 'trainer@ironcore.com', passwordHash: await bcrypt.hash('train123', 10), role: 'trainer' },
+    { userId: '3', name: 'Sara Member', email: 'member@ironcore.com', passwordHash: await bcrypt.hash('member123', 10), role: 'member' },
   ]
 
   const members = [
@@ -257,8 +273,26 @@ async function run() {
     { member: 'Ahmed Khalil', date: today, checkIn: '08:00', checkOut: null, duration: null },
   ]
 
+  const messages = [
+    {
+      name: 'Ali Hassan',
+      email: 'ali@email.com',
+      subject: 'Membership inquiry',
+      message: 'Do you offer family subscription discounts?',
+      submittedAt: new Date().toISOString(),
+    },
+    {
+      name: 'Noor Ahmed',
+      email: 'noor@email.com',
+      subject: 'Trainer availability',
+      message: 'Can I book evening sessions on weekdays?',
+      submittedAt: new Date().toISOString(),
+    },
+  ]
+
   await Promise.all([
     User.insertMany(users),
+    LoginInfo.insertMany(loginInfos),
     Member.insertMany(members),
     Trainer.insertMany(trainers),
     MembershipPlan.insertMany(plans),
@@ -269,9 +303,10 @@ async function run() {
     WorkoutPlan.insertMany(workouts),
     Subscription.insertMany(subscriptions),
     Attendance.insertMany(attendance),
+    Message.insertMany(messages),
   ])
 
-  console.log('Seed complete: users, members, sessions, payments, workouts, subscriptions, attendance')
+  console.log(`Seed complete for database: ${MONGODB_DB}`)
   await mongoose.disconnect()
 }
 

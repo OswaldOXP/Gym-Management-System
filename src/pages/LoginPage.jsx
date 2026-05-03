@@ -29,11 +29,11 @@ export default function LoginPage() {
 
   const fillDemo = role => {
     const creds = {
-      admin:   { email: 'admin@ironcore.com',   password: 'admin123'  },
-      trainer: { email: 'trainer@ironcore.com', password: 'train123'  },
-      member:  { email: 'member@ironcore.com',  password: 'member123' },
+      admin:   { email: 'admin@ironcore.com' },
+      trainer: { email: 'trainer@ironcore.com' },
+      member:  { email: 'member@ironcore.com' },
     }
-    setForm(creds[role])
+    setForm(current => ({ ...current, ...creds[role], password: '' }))
   }
 
   return (
@@ -60,7 +60,7 @@ export default function LoginPage() {
 
           {/* Demo shortcuts */}
           <div className="demo-shortcuts">
-            <p className="demo-label">Quick demo login:</p>
+            <p className="demo-label">Quick demo email:</p>
             <div className="demo-btns">
               {['admin','trainer','member'].map(r => (
                 <button key={r} className="btn btn-ghost btn-sm" onClick={() => fillDemo(r)}>{r}</button>

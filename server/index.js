@@ -15,12 +15,14 @@ const app = express()
 const PORT = process.env.PORT || 4000
 const JWT_SECRET = process.env.JWT_SECRET || 'ironcore-demo-secret'
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ironcore'
+const MONGODB_DB = process.env.MONGODB_DB || 'mern'
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const projectRoot = path.resolve(__dirname, '..')
 const GRAPH_ROOTS = ['src', 'server']
 const GRAPH_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx'])
+!const sseClients = new Set()
 
 app.use(cors({
   origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN.split(',').map(origin => origin.trim()),
@@ -34,12 +36,55 @@ app.use((req, res, next) => {
   next()
 })
 
+function broadcastDataChanged(change = {}) {
+  if (!sseClients.size) return
+  const payload = JSON.stringify({
+    type: 'data-changed',
+    timestamp: new Date().toISOString(),
+    ...change,
+  })
+
+  for (const client of sseClients) {
+    client.write(`data: ${payload}\n\n`)
+  }
+}
+
+app.get('/api/events', (_req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no')
+
+  res.write(`data: ${JSON.stringify({ type: 'connected', timestamp: new Date().toISOString() })}\n\n`)
+  sseClients.add(res)
+
+  const keepAliveTimer = setInterval(() => {
+    res.write(': keepalive\n\n')
+  }, 25000)
+
+  res.on('close', () => {
+    clearInterval(keepAliveTimer)
+    sseClients.delete(res)
+  })
+})
+
+app.get('/', (_req, res) => {
+  res.json({ ok: true, service: 'ironcore-api', message: 'Use /api/health or the Postman collection endpoints.' })
+})
+
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
   role: { type: String, enum: ['admin', 'trainer', 'member'], default: 'member' },
 }, { timestamps: true })
+
+const loginInfoSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  name: String,
+  email: { type: String, required: true, unique: true },
+  passwordHash: { type: String, required: true },
+  role: { type: String, enum: ['admin', 'trainer', 'member'], default: 'member' },
+}, { timestamps: true, collection: 'Login_info' })
 
 const memberSchema = new mongoose.Schema({
   name: String,
@@ -154,6 +199,7 @@ const messageSchema = new mongoose.Schema({
 
 const models = {
   User: mongoose.models.User || mongoose.model('User', userSchema),
+  LoginInfo: mongoose.models.LoginInfo || mongoose.model('LoginInfo', loginInfoSchema, 'Login_info'),
   Member: mongoose.models.Member || mongoose.model('Member', memberSchema),
   Trainer: mongoose.models.Trainer || mongoose.model('Trainer', trainerSchema),
   MembershipPlan: mongoose.models.MembershipPlan || mongoose.model('MembershipPlan', membershipPlanSchema),
@@ -169,9 +215,14 @@ const models = {
 
 const memory = {
   users: [
-    { id: 1, name: 'Admin User', email: 'admin@ironcore.com', passwordHash: bcrypt.hashSync('admin123', 10), role: 'admin' },
-    { id: 2, name: 'John Trainer', email: 'trainer@ironcore.com', passwordHash: bcrypt.hashSync('train123', 10), role: 'trainer' },
-    { id: 3, name: 'Sara Member', email: 'member@ironcore.com', passwordHash: bcrypt.hashSync('member123', 10), role: 'member' },
+    { id: 1, name: 'Admin User', email: 'admin@ironcore.com', role: 'admin' },
+    { id: 2, name: 'John Trainer', email: 'trainer@ironcore.com', role: 'trainer' },
+    { id: 3, name: 'Sara Member', email: 'member@ironcore.com', role: 'member' },
+  ],
+  loginInfos: [
+    { id: 1, userId: '1', name: 'Admin User', email: 'admin@ironcore.com', passwordHash: bcrypt.hashSync('admin123', 10), role: 'admin' },
+    { id: 2, userId: '2', name: 'John Trainer', email: 'trainer@ironcore.com', passwordHash: bcrypt.hashSync('train123', 10), role: 'trainer' },
+    { id: 3, userId: '3', name: 'Sara Member', email: 'member@ironcore.com', passwordHash: bcrypt.hashSync('member123', 10), role: 'member' },
   ],
   members: [
     { id: 1, name: 'Sara Al Mansoori', email: 'sara@email.com', phone: '+971 50 111 2222', plan: 'Pro', status: 'active', joined: '2024-01-15', expiry: '2025-03-31' },
@@ -235,6 +286,11 @@ function permit(...roles) {
 
 function sanitizeUser(user) {
   const { passwordHash, ...safe } = user.toObject ? user.toObject() : user
+  return safe
+}
+
+function sanitizeLoginInfo(loginInfo) {
+  const { passwordHash, ...safe } = loginInfo.toObject ? loginInfo.toObject() : loginInfo
   return safe
 }
 
@@ -489,6 +545,32 @@ async function findUserByEmail(email) {
   return memory.users.find(user => user.email === email) || null
 }
 
+async function findLoginInfoByEmail(email) {
+  if (connectedToMongo) return models.LoginInfo.findOne({ email })
+  return memory.loginInfos.find(loginInfo => loginInfo.email === email) || null
+}
+
+async function migrateLoginInfoCollection() {
+  if (!connectedToMongo) return
+
+  const users = await models.User.find()
+  for (const user of users) {
+    if (!user.email) continue
+    const existing = await models.LoginInfo.findOne({ email: user.email })
+    if (!existing && user.passwordHash) {
+      await models.LoginInfo.create({
+        userId: String(user._id),
+        name: user.name,
+        email: user.email,
+        passwordHash: user.passwordHash,
+        role: user.role,
+      })
+    }
+  }
+
+  await models.User.updateMany({}, { $unset: { passwordHash: '' } })
+}
+
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, backend: 'ironcore-api', mongo: connectedToMongo })
 })
@@ -500,8 +582,11 @@ app.post('/api/auth/login', async (req, res) => {
   const user = await findUserByEmail(email)
   if (!user) return res.status(401).json({ error: 'Invalid email or password' })
 
-  const passwordHash = user.passwordHash || user.password
-  const valid = connectedToMongo ? await bcrypt.compare(password, passwordHash) : await bcrypt.compare(password, passwordHash)
+  const loginInfo = await findLoginInfoByEmail(email)
+  const passwordHash = loginInfo?.passwordHash || user.passwordHash || user.password
+  if (!passwordHash) return res.status(401).json({ error: 'Invalid email or password' })
+
+  const valid = await bcrypt.compare(password, passwordHash)
   if (!valid) return res.status(401).json({ error: 'Invalid email or password' })
 
   const safeUser = sanitizeUser(user)
@@ -524,7 +609,14 @@ app.post('/api/auth/register', async (req, res) => {
   const expiry = expiryDate.toISOString().split('T')[0]
   let user
   if (connectedToMongo) {
-    user = await models.User.create({ name, email, passwordHash, role: 'member' })
+    user = await models.User.create({ name, email, role: 'member' })
+    await models.LoginInfo.create({
+      userId: String(user._id),
+      name,
+      email,
+      passwordHash,
+      role: 'member',
+    })
     await models.Member.create({
       name,
       email,
@@ -534,9 +626,13 @@ app.post('/api/auth/register', async (req, res) => {
       joined,
       expiry,
     })
+    broadcastDataChanged({ resource: 'users', action: 'create' })
+    broadcastDataChanged({ resource: 'members', action: 'create' })
   } else {
-    user = { id: Date.now(), name, email, passwordHash, role: 'member' }
+    const userId = Date.now()
+    user = { id: userId, name, email, role: 'member' }
     memory.users.push(user)
+    memory.loginInfos.unshift({ id: userId, userId: String(userId), name, email, passwordHash, role: 'member' })
     memory.members.unshift({
       id: Date.now() + 1,
       name,
@@ -547,6 +643,8 @@ app.post('/api/auth/register', async (req, res) => {
       joined,
       expiry,
     })
+    broadcastDataChanged({ resource: 'users', action: 'create' })
+    broadcastDataChanged({ resource: 'members', action: 'create' })
   }
 
   const safeUser = sanitizeUser(user)
@@ -574,10 +672,12 @@ function crudRoutes(basePath, modelName, memoryKey, options = {}) {
     if (validateMaybe(res, validateCreate, req.body)) return
     if (connectedToMongo) {
       const created = await models[modelName].create(req.body)
+      broadcastDataChanged({ resource: memoryKey, action: 'create' })
       return res.status(201).json(toPlain(created))
     }
     const created = { ...req.body, id: Date.now() }
     memory[memoryKey].unshift(created)
+    broadcastDataChanged({ resource: memoryKey, action: 'create' })
     return res.status(201).json(created)
   })
 
@@ -587,11 +687,13 @@ function crudRoutes(basePath, modelName, memoryKey, options = {}) {
     if (connectedToMongo) {
       const updated = await models[modelName].findByIdAndUpdate(id, req.body, { new: true })
       if (!updated) return res.status(404).json({ error: 'Not found' })
+      broadcastDataChanged({ resource: memoryKey, action: 'update' })
       return res.json(toPlain(updated))
     }
     const index = memory[memoryKey].findIndex(item => String(item.id) === String(id))
     if (index < 0) return res.status(404).json({ error: 'Not found' })
     memory[memoryKey][index] = { ...memory[memoryKey][index], ...req.body }
+    broadcastDataChanged({ resource: memoryKey, action: 'update' })
     return res.json(memory[memoryKey][index])
   })
 
@@ -600,11 +702,13 @@ function crudRoutes(basePath, modelName, memoryKey, options = {}) {
     if (connectedToMongo) {
       const deleted = await models[modelName].findByIdAndDelete(id)
       if (!deleted) return res.status(404).json({ error: 'Not found' })
+      broadcastDataChanged({ resource: memoryKey, action: 'delete' })
       return res.status(204).end()
     }
     const before = memory[memoryKey].length
     memory[memoryKey] = memory[memoryKey].filter(item => String(item.id) !== String(id))
     if (memory[memoryKey].length === before) return res.status(404).json({ error: 'Not found' })
+    broadcastDataChanged({ resource: memoryKey, action: 'delete' })
     return res.status(204).end()
   })
 }
@@ -638,10 +742,21 @@ app.post('/api/users', authRequired, permit('admin'), async (req, res) => {
   const passwordHash = await bcrypt.hash(password, 10)
   let user
   if (connectedToMongo) {
-    user = await models.User.create({ name, email, passwordHash, role })
+    user = await models.User.create({ name, email, role })
+    await models.LoginInfo.create({
+      userId: String(user._id),
+      name,
+      email,
+      passwordHash,
+      role,
+    })
+    broadcastDataChanged({ resource: 'users', action: 'create' })
   } else {
-    user = { id: Date.now(), name, email, passwordHash, role }
+    const userId = Date.now()
+    user = { id: userId, name, email, role }
     memory.users.unshift(user)
+    memory.loginInfos.unshift({ id: userId, userId: String(userId), name, email, passwordHash, role })
+    broadcastDataChanged({ resource: 'users', action: 'create' })
   }
 
   res.status(201).json(sanitizeUser(user))
@@ -654,22 +769,52 @@ app.put('/api/users/:id', authRequired, permit('admin'), async (req, res) => {
   if (role && !['admin', 'trainer', 'member'].includes(role)) return sendValidationError(res, 'Invalid role')
 
   if (connectedToMongo) {
+    const current = await models.User.findById(id)
+    if (!current) return res.status(404).json({ error: 'Not found' })
+
     const updates = { ...req.body }
-    if (password) {
-      updates.passwordHash = await bcrypt.hash(password, 10)
-      delete updates.password
-    }
+    delete updates.password
     const updated = await models.User.findByIdAndUpdate(id, updates, { new: true })
     if (!updated) return res.status(404).json({ error: 'Not found' })
+
+    const loginInfoUpdates = {
+      name: updated.name,
+      email: updated.email,
+      role: updated.role,
+    }
+    if (password) {
+      loginInfoUpdates.passwordHash = await bcrypt.hash(password, 10)
+    }
+    await models.LoginInfo.findOneAndUpdate(
+      { userId: String(updated._id) },
+      { $set: loginInfoUpdates },
+      { new: true, upsert: true },
+    )
+
+    broadcastDataChanged({ resource: 'users', action: 'update' })
+
     return res.json(sanitizeUser(updated))
   }
 
   const index = memory.users.findIndex(item => String(item.id) === String(id))
   if (index < 0) return res.status(404).json({ error: 'Not found' })
   const next = { ...memory.users[index], ...req.body }
-  if (password) next.passwordHash = bcrypt.hashSync(password, 10)
-  delete next.password
   memory.users[index] = next
+
+  const loginIndex = memory.loginInfos.findIndex(item => String(item.userId) === String(id))
+  if (loginIndex >= 0) {
+    const loginNext = {
+      ...memory.loginInfos[loginIndex],
+      name: next.name,
+      email: next.email,
+      role: next.role,
+    }
+    if (password) loginNext.passwordHash = bcrypt.hashSync(password, 10)
+    memory.loginInfos[loginIndex] = loginNext
+  }
+
+  broadcastDataChanged({ resource: 'users', action: 'update' })
+
   return res.json(sanitizeUser(next))
 })
 
@@ -678,11 +823,15 @@ app.delete('/api/users/:id', authRequired, permit('admin'), async (req, res) => 
   if (connectedToMongo) {
     const deleted = await models.User.findByIdAndDelete(id)
     if (!deleted) return res.status(404).json({ error: 'Not found' })
+    await models.LoginInfo.deleteOne({ userId: String(deleted._id) })
+    broadcastDataChanged({ resource: 'users', action: 'delete' })
     return res.status(204).end()
   }
   const before = memory.users.length
   memory.users = memory.users.filter(item => String(item.id) !== String(id))
   if (memory.users.length === before) return res.status(404).json({ error: 'Not found' })
+  memory.loginInfos = memory.loginInfos.filter(item => String(item.userId) !== String(id))
+  broadcastDataChanged({ resource: 'users', action: 'delete' })
   return res.status(204).end()
 })
 
@@ -701,11 +850,13 @@ app.post('/api/public/messages', async (req, res) => {
 
   if (connectedToMongo) {
     const created = await models.Message.create(payload)
+    broadcastDataChanged({ resource: 'messages', action: 'create' })
     return res.status(201).json(created)
   }
 
   const created = { ...payload, id: Date.now() }
   memory.messages.unshift(created)
+  broadcastDataChanged({ resource: 'messages', action: 'create' })
   return res.status(201).json(created)
 })
 
@@ -816,15 +967,16 @@ app.use((error, _req, res, _next) => {
 
 async function start() {
   try {
-    await mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    await mongoose.connect(MONGODB_URI, { dbName: MONGODB_DB })
+    await migrateLoginInfoCollection()
     connectedToMongo = true
-    console.log('Connected to MongoDB:', MONGODB_URI.includes('@') ? 'atlas/remote' : MONGODB_URI)
+    console.log('Connected to MongoDB:', `${MONGODB_URI.includes('@') ? 'atlas/remote' : MONGODB_URI} (db: ${MONGODB_DB})`)
   } catch (error) {
     console.warn('MongoDB unavailable, falling back to in-memory store:', error.message)
   }
 
-  app.listen(PORT, () => {
-    console.log(`IronCore API listening on http://localhost:${PORT}`)
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`IronCore API listening on http://127.0.0.1:${PORT} and http://localhost:${PORT}`)
   })
 }
 

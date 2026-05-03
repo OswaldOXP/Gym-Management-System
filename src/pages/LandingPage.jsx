@@ -95,7 +95,7 @@ export default function LandingPage() {
           </div>
           <div className="hero-demo-hint">
             <span className="muted" style={{fontSize:'0.78rem'}}>
-              Demo logins — Admin: admin@ironcore.com / admin123 &nbsp;|&nbsp; Member: member@ironcore.com / member123
+              Demo logins are managed in the backend Login_info collection.
             </span>
           </div>
         </div>
